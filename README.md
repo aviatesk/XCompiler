@@ -1,5 +1,3 @@
-### `Core.Compiler` playground
-
 ## Usage
 
 This small toy module exports `@enter_call` and `enter_call`, which allows us to easily hook into any of `Core.Compiler`'s abstract interpretation / optimization routines.
@@ -13,7 +11,8 @@ XResult(XInterpreter(3763879814251570543), InferenceFrame(sin(::Int64) => Float6
 
 We're supposed to manually modify the code for each specific inspection/debug/development purpose.
 
-Say we want to track the inference call graph with calculating some timing, we can just add the following diff and re-run `@enter_call sin(10)`:
+Say we want to track the inference call graph with calculating timing took on each inference frame, we can add the following diff and re-run `@enter_call sin(10)`:
+(NOTE: [Revise.jl](https://github.com/timholy/Revise.jl) will be automatically loaded when `using` this module, so no need to load it manually)
 ```diff
 diff --git a/src/typeinfer.jl b/src/typeinfer.jl
 index ed731e4..3cd9d6d 100644
@@ -83,7 +82,6 @@ index ed731e4..3cd9d6d 100644
      ret = @invoke finish!(interp::AbstractInterpreter, caller::InferenceResult)
 ```
 ```julia
-# Revise.jl will be automatically loaded, so no need to load it manually
 julia> @enter_call sin(10)
 ┌ @ MethodInstance for sin(::Int64) math.jl:1218
 │┌ @ MethodInstance for float(::Int64) float.jl:269
@@ -104,7 +102,7 @@ XResult(XInterpreter(3763879814251570543), InferenceFrame(sin(::Int64) => Float6
 Boon !
 
 Likely, we can hook into every method defined in `Core.Compiler` that is overloaded on `AbstractInterpreter`.
-As an one more example, we can inspect `IRCode` (intermediate IR representation of Julia-level optimization) like this way:
+As an one more example, we can inspect `IRCode` (intermediate IR representation of a Julia-level optimization) like this way:
 ```diff
 diff --git a/src/optimize.jl b/src/optimize.jl
 index 735c4ad..03d2c64 100644
@@ -128,7 +126,7 @@ XResult(XInterpreter(3763879814251570543), InferenceFrame(sin(::Int64) => Float6
 julia> XCompiler.irs[1]
 146 1 ─ %1 = Base.sitofp(Float64, _2)::Float64                                                                                                                                                                               │
     └──      return %1
-``
+```
 
 ## Pipeline Configurations
 
@@ -152,7 +150,7 @@ CC.verbose_stmt_info(interp::XInterpreter) = interp.verbose_stmt_info
 julia> @enter_call optimize=false rand(1:10) # skip the optimization passes
 ```
 
-As seen in the `ipo_constant_propagation` example, `XCompiler`'s global code cache is associated with the identity of those configurations above,
+As seen in the `ipo_constant_propagation` example, `XCompiler`'s global code cache is associated with the identity of those configurations,
 so we don't need to care about the previous compilation cache with different parameters.
 
 ## Cache
