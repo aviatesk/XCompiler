@@ -3,7 +3,7 @@
 This small toy module exports `@enter_call` and `enter_call`, which allows us to easily hook into any of `Core.Compiler`'s abstract interpretation / optimization routines.
 
 `XCompiler` _just_ overloads everything of `Core.Compiler` defined on `AbstractInterpreter`.
-So without any manual modification, `@enter_call f(args)` won't do nothing interesting other than what `@code_typed f(args)` can do for us:
+So without any manual modification, `@enter_call f(args)` won't do nothing interesting other than what `@code_typed f(args)` can tell for us:
 ```julia
 julia> @enter_call sin(10)
 XResult(XInterpreter(3763879814251570543), InferenceFrame(sin(::Int64) => Float64))
@@ -139,7 +139,7 @@ julia> @enter_call ipo_constant_propagation=false rand(1:10) # disable constant 
 XResult(XInterpreter(6343901954784078298), InferenceFrame(rand(::UnitRange{Int64}) => Union{Int64, UInt64})) # looser return type inference
 ```
 
-`@enter_call` and `enter_call` can also accept additional pipeline configurations:
+`@enter_call` and `enter_call` can also accept additional pipeline configurations corresponding to:
 ```julia
 CC.may_optimize(interp::XInterpreter)      = interp.optimize
 CC.may_compress(interp::XInterpreter)      = interp.compress
@@ -151,11 +151,11 @@ julia> @enter_call optimize=false rand(1:10) # skip the optimization passes
 ```
 
 As seen in the `ipo_constant_propagation` example, `XCompiler`'s global code cache is associated with the identity of those configurations,
-so we don't need to care about the previous compilation cache with different parameters.
+so we don't need to care about the previous compilation cache when running the pipeline again with different parameters.
 
 ## Cache
 
-`XCompiler` keeps its own code cache, and `@enter_call` never interacts with Julia's code execution (e.g. `@enter_call enter_call(sin, (Int,))` won't influence _any code required to run `XCompiler`_).
+`XCompiler` keeps its own code cache, and `@enter_call` never interacts with Julia's code execution (e.g. `@enter_call enter_call(sin, (Int,))` won't influence _any code required to run `XCompiler` itself_).
 We can manually inspect stored code cache like this:
 ```julia
 julia> (; interp, frame) = @enter_call sin(10)
@@ -172,7 +172,7 @@ IdDict{Core.MethodInstance, Core.CodeInstance} with 228 entries:
 
 Here `CodeInstance` (holding a final result of Julia-level optimization) is stored with the associated `MethodInstance` key (which is the unit of inter-procedural Julia's inference/optimization), as Julia's native code generation pipeline does.
 
-Revise.jl is integrated with `XCompiler`'s global code cache.
+Revise.jl's automatic code update is also integrated with `XCompiler`'s global code cache.
 It means, `XCompiler` will invalidate all the global cache each time when Revise.jl updates `XCompiler`'s code, so that the next `enter_call` runs pipeline without influenced by the caches generated with the old code in anyway.
 
 ## TODO
