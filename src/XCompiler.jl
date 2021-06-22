@@ -121,7 +121,10 @@ function __init__()
             __clear_cache!()
         end
     end
+
+    foreach(f->f(), __init_hooks__)
 end
+const __init_hooks__ = []
 
 # utilties
 # --------

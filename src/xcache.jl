@@ -28,7 +28,7 @@ struct XGlobalCache
 end
 
 # cache existence for this `analyzer` is ensured on its construction
-x_code_cache(interp::XInterpreter)           = X_CODE_CACHE[interp.cache_key]
+x_code_cache(interp::XInterpreter)         = X_CODE_CACHE[interp.cache_key]
 x_code_cache(wvc::WorldView{XGlobalCache}) = x_code_cache(wvc.cache.interp)
 
 CC.haskey(wvc::WorldView{XGlobalCache}, mi::MethodInstance) = haskey(x_code_cache(wvc), mi)
